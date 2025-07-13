@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyVersion>25.07.13.0002</AssemblyVersion>
+    <FileVersion>25.07.13.0002</FileVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Remove="CustomFields.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="backup-project.ps1" />
+    <None Remove="backup.bat" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="CustomFields.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+</Project>

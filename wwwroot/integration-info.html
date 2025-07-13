@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRAL FBR Extension - Integration Info</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .integration-guide {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .step {
+            margin: 15px 0;
+            padding: 10px;
+            background: white;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+        }
+        .step-number {
+            background: #007bff;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .code-block {
+            background: #f1f3f4;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 15px 0;
+            color: #856404;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 15px 0;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
+        <!-- Error Message -->
+        <div class="header" style="text-align: center; margin-bottom: 30px;">
+            <h1>PRAL FBR Extension</h1>
+            <p style="color: #e74c3c; font-size: 18px; font-weight: bold;">⚠️ Error: This extension must be run within Manager application</p>
+            <p style="color: #6c757d;">This extension is designed to work as an iframe within the Manager application.</p>
+        </div>
+
+        <!-- Integration Guide -->
+        <div class="integration-guide">
+            <h2 style="color: #007bff; margin-top: 0;">📋 Integration Guide</h2>
+            <p>Follow these steps to properly integrate PRAL FBR Extension with Manager:</p>
+
+            <div class="step">
+                <span class="step-number">1</span>
+                <strong>Get Security Token from PRAL FBR Portal</strong>
+                <p>Before requesting your security token, copy this FBR-Extension IP address:</p>
+                <div class="code-block" style="background: #e8f5e8; border: 2px solid #28a745; text-align: center; font-size: 16px; font-weight: bold; color: #155724;">
+                    <span id="extension-ip">Loading IP address...</span>
+                </div>
+                <div class="warning">
+                    <strong>⚠️ Important:</strong> This IP address must be registered in the IP Whitelist when you request your Security Token from PRAL.
+                </div>
+                <p>Steps to get your token:</p>
+                <ul>
+                    <li>Visit PRAL FBR Portal and register your business</li>
+                    <li>During token request, provide the IP address shown above for whitelist registration</li>
+                    <li>Choose your desired environment:
+                        <ul>
+                            <li><strong>Sandbox</strong> - For testing and development</li>
+                            <li><strong>Production</strong> - For live server operations</li>
+                        </ul>
+                    </li>
+                    <li>Save the security token provided by PRAL</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>Add Extension to Manager</strong>
+                <p>Configure the extension in your Manager application:</p>
+                <ol>
+                    <li>Open your Manager Business Data</li>
+                    <li>Navigate to <strong>Settings → Extensions</strong></li>
+                    <li>Click <strong>Create New Extension</strong></li>
+                    <li>Configure the extension settings as shown below:</li>
+                </ol>
+                <div class="code-block">
+                    Extension Name: FBR Extension<br>
+                    Sources: Url<br>
+                    Endpoint: <span id="base-url">Loading...</span><br>
+                    Placement: sales-invoice-view<br>
+                    Leave Inactive unchecked
+                </div>
+                <div style="text-align: center; margin: 15px 0;">
+                    <img src="/images/ExtensionSetup.png" alt="Extension Configuration Screenshot" style="max-width: 100%; height: auto; border: 1px solid #dee2e6; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <br><small style="color: #6c757d;">Extension Configuration in Manager</small>
+                </div>
+                <div class="warning">
+                    <strong>⚠️ Note:</strong> Ensure the extension server is running on <span id="base-url">Loading...</span> before adding it to Manager.
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">3</span>
+                <strong>Integration Setup</strong>
+                <p>Complete the integration setup within Manager:</p>
+                
+                <h4 style="color: #007bff; margin: 15px 0 10px 0;">Step 3.1: Access Extension</h4>
+                <ol>
+                    <li>In Manager, open the <strong>Sales</strong> tab</li>
+                    <li>Create a new Invoice and save it</li>
+                    <li>Display the Invoice View</li>
+                    <li>Open the <strong>FBR - Extension</strong> tab below the Invoice View</li>
+                    <li>You will see the setup page as shown below:</li>
+                </ol>
+                <div style="text-align: center; margin: 15px 0;">
+                    <img src="/images/IntegrationSetup.png" alt="Extension Setup Page Screenshot" style="max-width: 100%; height: auto; border: 1px solid #dee2e6; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <br><small style="color: #6c757d;">FBR Integration Setup Page in Manager</small>
+                </div>
+                
+                <h4 style="color: #007bff; margin: 15px 0 10px 0;">Step 3.2: Generate Custom Fields</h4>
+                <p>Click the <strong>[Generate Custom Fields]</strong> button:</p>
+                <ul>
+                    <li>This button creates all required Custom Fields for the integration</li>
+                    <li>Custom fields will be automatically added to your Manager database</li>
+                    <li>Wait for the success confirmation message</li>
+                </ul>
+                
+                <h4 style="color: #007bff; margin: 15px 0 10px 0;">Step 3.3: Configure Business Details</h4>
+                <p>Complete the "Business Setup Configuration" form with your information:</p>
+                <ul>
+                    <li><strong>Business Name</strong> - Your registered business name</li>
+                    <li><strong>NTN/CNIC</strong> - Your tax identification number</li>
+                    <li><strong>Province</strong> - Select your business province</li>
+                    <li><strong>Address</strong> - Complete business address</li>
+                    <li><strong>Environment</strong> - Choose Sandbox or Production (must match your token)</li>
+                    <li><strong>Bearer Token</strong> - Enter the security token from PRAL</li>
+                </ul>
+                
+                <h4 style="color: #007bff; margin: 15px 0 10px 0;">Step 3.4: Validate and Save</h4>
+                <p>Click <strong>[Validate Token & Update Business Details]</strong> button:</p>
+                <ul>
+                    <li>This tests your token against the FBR server</li>
+                    <li>Ensure the Environment selection matches your token type</li>
+                    <li>If validation succeeds, data will be saved to Business Details</li>
+                    <li>The extension is now ready to submit invoices to FBR</li>
+                </ul>
+                
+                <div class="success">
+                    <strong>✅ Success:</strong> Once setup is complete, you can submit invoices to FBR directly from Manager using this extension.
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="integration-guide">
+
+            <h3 style="color: #17a2b8;">📞 Support</h3>
+            <p>If you encounter issues during integration:</p>
+            <ul>
+                <li>Check that the extension server is running on the correct port</li>
+                <li>Verify HTTPS certificate is properly configured</li>
+                <li>Ensure Manager has Extensions feature enabled</li>
+                <li>Confirm FBR bearer token is valid and active</li>
+            </ul>
+            
+            <h4 style="color: #17a2b8; margin: 15px 0 10px 0;">🌐 Additional Resources</h4>
+            <ul>
+                <li><strong>Manager Community Forum:</strong> <a href="https://www.forum.manager.io" target="_blank" style="color: #007bff; text-decoration: none;">https://www.forum.manager.io</a> - Get help from the Manager community</li>
+                <li><strong>Open Source Repository:</strong> <a href="https://github.com/mabaega/PralFbrExtension" target="_blank" style="color: #007bff; text-decoration: none;">mabaega/PralFbrExtension</a> - View source code, report issues, and contribute</li>
+            </ul>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #6c757d;">
+            <p>PRAL FBR Extension <span id="app-version">v1.0</span></p>
+        </div>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script>
+        if (window.self === window.top) {
+            loadServerIP();
+            displayBaseUrl();
+            loadAppVersionWithFallback();
+        }
+    </script>
+</body>
+</html>

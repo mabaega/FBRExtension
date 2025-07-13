@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Already Reported - PRAL FBR Extension</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Override global styles for this page */
+        html, body {
+            overflow: auto !important;
+            height: auto !important;
+            min-height: auto !important;
+        }
+
+        body {
+            padding: 10px !important;
+        }
+
+        .container {
+            max-width: 765px !important;
+            margin: 0 !important;
+            padding: 20px !important;
+            height: auto !important;
+        }
+
+        .status-container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+        }
+
+        .status-title {
+            color: #28a745;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .app-footer {
+            margin-top: 15px !important;
+            padding: 10px 0 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>PRAL FBR Extension</h1>
+            <p>Manager Application Extension for FBR Invoice Submission</p>
+        </div>
+
+        <div class="status-container">
+            <div class="status-header">
+                <h1 class="status-title">Invoice Successfully Reported</h1>
+                <p class="status-subtitle">This invoice has been reported to FBR</p>
+                <div id="qrcode" style="margin-bottom: 10px;"></div>
+                <p class="detail-value" id="fbr-invoice-number">Loading...</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="app-footer">
+            <div>PRAL FBR Extension <span id="app-version">Loading...</span></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/common.js"></script>
+    <script>
+        function generateInvoiceQrSvg(invoiceNumber) {
+            try {
+                const qr = qrcode(0, 'L'); // Error correction level 'L' (Low)
+                qr.addData(invoiceNumber);
+                qr.make();
+                return qr.createSvgTag({ scalable: true });
+            } catch (error) {
+                console.error('Error generating QR code:', error);
+                throw new Error('Failed to generate QR code: ' + error.message);
+            }
+        }
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const fbrInvoiceNumber = urlParams.get('fbrNumber');
+
+        // Update the page with invoice details
+        if (fbrInvoiceNumber) {
+            document.getElementById('fbr-invoice-number').textContent = 'Invoice Number: ' + fbrInvoiceNumber;
+        }
+
+        // Generate qrcode image and show above fbr-invoice-number
+        const qrContainer = document.getElementById('qrcode');
+        if (typeof generateInvoiceQrSvg === 'function') {
+            const svg = generateInvoiceQrSvg(fbrInvoiceNumber);
+            qrContainer.innerHTML = svg;
+            // (Opsional) Tambahkan style langsung ke SVG jika perlu
+            const svgElem = qrContainer.querySelector('svg');
+            if (svgElem) {
+                svgElem.setAttribute('width', '100');
+                svgElem.setAttribute('height', '100');
+                svgElem.style.display = 'block';
+                svgElem.style.margin = '0 auto';
+            }
+        } else {
+            qrContainer.textContent = 'QR code function not found';
+        }
+
+        // Load application version with fallback for static environment
+        loadAppVersionWithFallback();
+
+        // Send resize message to parent iframe after page is loaded
+        document.addEventListener('DOMContentLoaded', function () {
+            sendResize();
+        });
+    </script>
+</body>
+</html>

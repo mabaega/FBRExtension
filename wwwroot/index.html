@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRAL FBR Extension</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>PRAL FBR Extension</h1>
+            <p>Manager Application Extension for FBR Invoice Submission</p>
+        </div>
+
+        <div class="section" id="invoice-container">
+            <!-- Tab Navigation -->
+            <div class="tab-container" id="tab-container">
+                <div class="tab-nav">
+                    <button class="tab-btn active" data-tab="manager-invoice" style="padding: 8px 16px; height: 32px; box-sizing: border-box;">Manager Invoice</button>
+                    <button class="tab-btn" data-tab="fbr-invoice" style="padding: 8px 16px; height: 32px; box-sizing: border-box;">FBR Invoice</button>
+                    <button class="tab-btn" data-tab="server-response" style="padding: 8px 16px; height: 32px; box-sizing: border-box;">Server Response</button>
+                </div>
+
+                <div class="tab-content">
+                    <div id="manager-invoice" class="tab-pane active">
+                        <textarea id="invoice-data" class="invoice-textarea" placeholder="Manager invoice data will appear here..." readonly></textarea>
+                    </div>
+
+                    <div id="fbr-invoice" class="tab-pane">
+                        <textarea id="fbr-invoice-data" class="invoice-textarea" placeholder="FBR invoice data will appear here..." readonly></textarea>
+                    </div>
+
+                    <div id="server-response" class="tab-pane">
+                        <textarea id="server-response-data" class="invoice-textarea" placeholder="Server response will appear here..." readonly></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Button layout: left and right -->
+            <div class="button-container">
+                <button id="request-invoice-btn" class="btn btn-left" disabled style="padding: 8px 16px; height: 32px; box-sizing: border-box;"><i class="fas fa-sync-alt"></i> Reload Invoice Data</button>
+                <div class="btn-right">
+                    <button id="validate-invoice-btn" class="btn btn-secondary" disabled style="display: none; padding: 8px 16px; height: 32px; box-sizing: border-box;"><i class="fas fa-check-circle"></i> Validate Invoice</button>
+                    <button id="submit-invoice-btn" class="btn btn-primary" disabled style="display: none; padding: 8px 16px; height: 32px; box-sizing: border-box;"><i class="fas fa-paper-plane"></i> Submit Invoice to PRAL FBR</button>
+                </div>
+            </div>
+
+        </div>
+        <!-- Footer -->
+        <div class="app-footer">
+            <div>PRAL FBR Extension <span id="app-version">v1.0</span></div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript files -->
+    
+    <script src="js/common.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/data-enrichment.js"></script>
+    <script src="js/main.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Check if running inside iframe
+                if (window.parent === window) {
+                    window.location.href = '/integration-info.html';
+                    return;
+                }
+
+                // Fetch business details from parent
+                let businessDetails;
+
+                try {
+                    businessDetails = await makeManagerApiRequest('/api3/business-details-form');
+                } catch (error) {
+                    console.error('Error fetching business details:', error);
+                    Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error fetching business details: ' + error.message
+                });
+                    return;
+                }
+                
+                // Simple version check: if version number is less than minimum, redirect to setup
+                const MINIMUM_VERSION_NUMBER = 2507130001; 
+                
+                // Validate business details with version check
+                const validation = validateBusinessDetails(businessDetails, MINIMUM_VERSION_NUMBER);
+                const { isComplete, missingFields, fieldValidationDetails } = validation;
+                
+                if (!isComplete) {
+
+                    const payloadSize = JSON.stringify(businessDetails).length;
+                    sessionStorage.setItem('businessDetailsPayload', JSON.stringify(businessDetails));
+                    
+                    // Redirect to business-setup through controller to ensure window.initialData is injected
+                    const dataParam = encodeURIComponent(JSON.stringify({ businessDetails: businessDetails }));
+                    const redirectUrl = `/api/BusinessSetup?data=${dataParam}`;
+
+                    window.location.href = redirectUrl;
+                    return;
+                }
+                
+                // Auto-check for invoice data to determine if already reported
+                let invoiceCheckComplete = false;
+                window.pageResponseData = null;
+                
+                // Set up message listener for invoice check
+                function handleInvoiceCheck(event) {
+                    if (event.data && event.data.type === 'page-response') {
+                        // Store page response data globally
+                        window.pageResponseData = event.data.body;
+
+                        const invoiceKey = event.data.body && event.data.body.query && event.data.body.query.key;
+                        if (invoiceKey) {
+                            // Make API request to get invoice data
+                            const requestId = 'invoice-check-' + Date.now();
+
+                            function apiHandler(event) {
+                                if (event.source !== window.parent) return;
+                                if (!event.data || event.data.requestId !== requestId) return;
+                                
+                                window.removeEventListener("message", apiHandler);
+                                
+                                const invoice = event.data.body;
+                                const fbrInvoiceNumber = getFbrInvoiceNumber(invoice);
+                                if (fbrInvoiceNumber) {
+                                    // Invoice already has Invoice Number, redirect immediately
+                                    const redirectUrl = createAlreadyReportedUrl(fbrInvoiceNumber, invoice.key);
+                                    window.location.href = redirectUrl;
+                                    return;
+                                }
+                                invoiceCheckComplete = true;
+                            }
+                            
+                            window.addEventListener("message", apiHandler);
+                            window.parent.postMessage({ 
+                                type: "api-request", 
+                                requestId: requestId, 
+                                path: "/api3/sales-invoice-form/" + invoiceKey, 
+                                method: "GET" 
+                            }, "*");
+                        } else {
+                            invoiceCheckComplete = true;
+                        }
+                    }
+                }
+                
+                window.addEventListener("message", handleInvoiceCheck);
+                
+                try {
+                    // Request current page data from Manager to check invoice status
+                    window.parent.postMessage({ type: "page-request" }, "*");
+                    
+                    // Wait for invoice check to complete or timeout
+                    const startTime = Date.now();
+                    while (!invoiceCheckComplete && (Date.now() - startTime) < 500) {
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    }
+                    
+                    // Remove the invoice check listener
+                    window.removeEventListener("message", handleInvoiceCheck);
+                } catch (error) {
+                    console.error('Error requesting invoice data:', error);
+                    window.removeEventListener("message", handleInvoiceCheck);
+                }
+                
+                // Store business details globally for use by other scripts
+                window.businessDetails = businessDetails;
+
+                // Initialize the main application
+                if (typeof initializeEventListeners === 'function') {
+                   initializeEventListeners();
+                } else {
+
+                }
+
+                loadAppVersionWithFallback();
+            } catch (error) {
+                console.error('Startup error:', error);
+
+                Swal.fire({
+                icon: 'error',
+                title: 'Startup Error',
+                text: 'Startup error: ' + error.message
+            });
+            }
+        });
+    </script>
+    
+</body>
+</html>

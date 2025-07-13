@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Setup - PRAL FBR Extension</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Custom Fields Generation Section -->
+        <div class="form-section" id="manager-integration-setup" style="padding: 15px; margin-bottom: 15px;">
+            <h1 style="margin: 0 0 8px 0;">PRAL FBR integration Integration Setup</h1>
+            <p style="margin: 0 0 12px 0;">Generate required custom fields in Manager for PRAL FBR integration</p>
+
+            <div class="form-actions" style="margin: 0;">
+                <button type="button" id="generate-custom-fields" class="btn btn-primary" style="padding: 8px 16px;">
+                    Generate Custom Fields
+                </button>
+            </div>
+
+            <div id="custom-fields-status" class="status-indicator" style="display: none; margin-top: 10px;">
+                <span class="status-dot status-unknown"></span>
+                <span class="status-text">Ready to generate</span>
+            </div>
+        </div>
+
+        <form id="business-setup-form">
+            <!-- Business Setup - 8 Essential Fields -->
+            <div class="form-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">Business Setup Configuration</h2>
+                    <div style="background: #f8f9fa; padding: 8px 12px; border-radius: 4px; border: 1px solid #dee2e6;">
+                        <strong>Host IP: </strong><span id="host-ip">Loading...</span>
+                    </div>
+                </div>
+
+                <!-- Business Name - Full Width -->
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label for="567e4a1f-9b82-4175-bdca-66132cb8c44a">Business Name *</label>
+                        <input type="text" id="567e4a1f-9b82-4175-bdca-66132cb8c44a" class="form-control" placeholder="Enter business name" required>
+                    </div>
+                    <div class="form-group form-col">
+                        <label for="54fbab94-8a3b-48ec-98c8-bc37aa2c64de">NTN/CNIC *</label>
+                        <input type="text" id="54fbab94-8a3b-48ec-98c8-bc37aa2c64de" class="form-control" placeholder="Enter NTN or CNIC" required>
+                    </div>
+                </div>
+
+                <!-- NTN/CNIC and Province - Two Columns -->
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label for="b9712fb7-24bb-493c-a5a6-f9190ef0e943">Province *</label>
+                        <select id="b9712fb7-24bb-493c-a5a6-f9190ef0e943" class="form-control" required>
+                            <option value="">Select Province</option>
+                            <option value="BALOCHISTAN">BALOCHISTAN</option>
+                            <option value="AZAD JAMMU AND KASHMIR">AZAD JAMMU AND KASHMIR</option>
+                            <option value="CAPITAL TERRITORY">CAPITAL TERRITORY</option>
+                            <option value="KHYBER PAKHTUNKHWA">KHYBER PAKHTUNKHWA</option>
+                            <option value="PUNJAB">PUNJAB</option>
+                            <option value="SINDH">SINDH</option>
+                            <option value="GILGIT BALTISTAN">GILGIT BALTISTAN</option>
+                        </select>
+                    </div>
+                    <!-- Address - Full Width -->
+                     <div class="form-group form-col">
+                        <label for="a9f32674-2b04-4692-b157-0260c14f47ac">Address *</label>
+                        <input type="text" id="a9f32674-2b04-4692-b157-0260c14f47ac" class="form-control" placeholder="Enter complete business address" required>
+                    </div>
+                </div>
+
+                <!-- Environment and Scenario ID - Two Columns -->
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label for="a8c17945-544f-4590-82c3-08735786f4e7">Environment *</label>
+                        <select id="a8c17945-544f-4590-82c3-08735786f4e7" class="form-control" required>
+                            <option value="">Select Environment</option>
+                            <option value="Sandbox">Sandbox (Testing)</option>
+                            <option value="Production">Production (Live)</option>
+                        </select>
+                    </div>
+                    <!-- Bearer Token - Full Width -->
+                    <div class="form-group form-col">
+                        <label for="4536b105-2dc1-45a9-9679-57580052fd6a">Bearer Token *</label>
+                        <input type="password" id="4536b105-2dc1-45a9-9679-57580052fd6a" class="form-control" placeholder="Enter bearer token from PRAL" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <!-- Action Buttons -->
+                    <button type="button" id="Update-Business-Details" class="btn btn-primary" style="padding: 8px 16px; display: block; margin: 0 auto;">
+                        Update Business Details
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    
+    <script src="/js/common.js"></script>
+    <script src="/js/api.js"></script>
+    
+    <script>
+        // Simple Business Setup JavaScript
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // Display host IP address
+            displayHostIP();
+            
+            // Load data from controller (window.initialData)
+
+            if (window.initialData) {
+                // Data sudah ada dari controller
+                loadData(window.initialData);
+    
+            } else {
+                console.error('No data found in window.initialData - controller should guarantee data availability');
+            }
+           
+            // Update Business Details button
+            document.getElementById('Update-Business-Details').addEventListener('click', updateBusinessDetails);
+        });
+
+        // Function to display server IP address for FBR whitelist registration
+
+        function displayHostIP() {
+            const hostIPElement = document.getElementById('host-ip');
+            
+            // Show loading state
+            hostIPElement.innerHTML = '<span style="color: #6c757d;">Detecting server IP...</span>';
+            
+            // Get server's public IP address from our controller endpoint
+            fetch('/api/BusinessSetup/GetServerIP')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.serverIP) {
+                        hostIPElement.innerHTML = `
+                            <span style="color: #28a745; font-weight: bold; font-size: 16px;" 
+                                  title="Register this server IP address to FBR whitelist for proper communication">${data.serverIP}</span>
+                        `;
+        
+                    } else {
+                        hostIPElement.innerHTML = `
+                            <span style="color: #dc3545;" 
+                                  title="Unable to detect server IP. Contact administrator to get the correct server IP address">Unable to detect</span>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error getting server IP:', error);
+                    
+                    // Fallback: Show local hostname and user IP for reference
+                    try {
+                        const host = window.location.hostname;
+                        const port = window.location.port;
+                        
+                        let localInfo = host;
+                        if (port && port !== '80' && port !== '443') {
+                            localInfo = `${host}:${port}`;
+                        }
+                        
+                        hostIPElement.innerHTML = `
+                            <span style="color: #dc3545;" 
+                                  title="Error detecting server IP. Local address: ${localInfo}. Contact administrator to get the correct server IP address">Error detecting</span>
+                        `;
+                    } catch (fallbackError) {
+                        hostIPElement.innerHTML = '<span style="color: #dc3545;" title="Error detecting server IP. Contact administrator">Error detecting</span>';
+                    }
+                });
+        }
+
+        // Load data into form
+
+        function loadData(data) {
+                
+            // Extract custom fields from the business details structure
+            const customFields = data?.businessDetails?.customFields2?.strings;
+            
+            // Check if all form elements exist
+            const formElements = [
+                '567e4a1f-9b82-4175-bdca-66132cb8c44a',
+                '54fbab94-8a3b-48ec-98c8-bc37aa2c64de',
+                'b9712fb7-24bb-493c-a5a6-f9190ef0e943',
+                'a9f32674-2b04-4692-b157-0260c14f47ac',
+                'a8c17945-544f-4590-82c3-08735786f4e7',
+                '4536b105-2dc1-45a9-9679-57580052fd6a'
+            ];
+            
+            if (customFields) {
+                // Load each field using the custom field IDs
+                if (customFields['567e4a1f-9b82-4175-bdca-66132cb8c44a']) {
+                    document.getElementById('567e4a1f-9b82-4175-bdca-66132cb8c44a').value = customFields['567e4a1f-9b82-4175-bdca-66132cb8c44a'];
+                }
+                if (customFields['54fbab94-8a3b-48ec-98c8-bc37aa2c64de']) {
+                    document.getElementById('54fbab94-8a3b-48ec-98c8-bc37aa2c64de').value = customFields['54fbab94-8a3b-48ec-98c8-bc37aa2c64de'];
+                }
+                if (customFields['b9712fb7-24bb-493c-a5a6-f9190ef0e943']) {
+                    document.getElementById('b9712fb7-24bb-493c-a5a6-f9190ef0e943').value = customFields['b9712fb7-24bb-493c-a5a6-f9190ef0e943'];
+                }
+                if (customFields['a9f32674-2b04-4692-b157-0260c14f47ac']) {
+                    document.getElementById('a9f32674-2b04-4692-b157-0260c14f47ac').value = customFields['a9f32674-2b04-4692-b157-0260c14f47ac'];
+                }
+                if (customFields['a8c17945-544f-4590-82c3-08735786f4e7']) {
+                    document.getElementById('a8c17945-544f-4590-82c3-08735786f4e7').value = customFields['a8c17945-544f-4590-82c3-08735786f4e7'];
+                }
+                if (customFields['4536b105-2dc1-45a9-9679-57580052fd6a']) {
+                    document.getElementById('4536b105-2dc1-45a9-9679-57580052fd6a').value = customFields['4536b105-2dc1-45a9-9679-57580052fd6a'];
+                }
+            } else {
+    
+            }
+        }
+
+        // Get form data
+        function getData() {
+            return {
+                BusinessName: document.getElementById('567e4a1f-9b82-4175-bdca-66132cb8c44a').value,
+                NtnCnic: document.getElementById('54fbab94-8a3b-48ec-98c8-bc37aa2c64de').value,
+                Province: document.getElementById('b9712fb7-24bb-493c-a5a6-f9190ef0e943').value,
+                Address: document.getElementById('a9f32674-2b04-4692-b157-0260c14f47ac').value,
+                Environment: document.getElementById('a8c17945-544f-4590-82c3-08735786f4e7').value,
+                BearerToken: document.getElementById('4536b105-2dc1-45a9-9679-57580052fd6a').value,
+            };
+        }
+
+        // Update Business Details function with token validation
+
+        async function updateBusinessDetails() {
+            try {
+                 
+                // Use data from controller as base and only update modified fields
+                // Controller guarantees data availability
+                let payload;
+                if (window.initialData?.businessDetails) {
+                    payload = JSON.parse(JSON.stringify(window.initialData.businessDetails));
+        
+                } else {
+                    console.error('No data found in window.initialData - controller should guarantee data availability');
+                    return;
+                }
+                
+                // Get form data
+                const formData = getData();
+                
+                // Validate required fields
+                if (!formData.BusinessName || !formData.NtnCnic || !formData.Province || 
+                    !formData.Address || !formData.Environment || !formData.BearerToken) {
+                    Swal.fire({
+                    icon: 'warning',
+                    title: 'Validation Error',
+                    text: 'Please fill in all required fields.'
+                });
+                    return;
+                }
+                
+                // Ensure customFields2 structure exists without overwriting existing data
+                if (!payload.customFields2) {
+                    payload.customFields2 = { strings: {} };
+                } else if (!payload.customFields2.strings) {
+                    payload.customFields2.strings = {};
+                }
+                
+                // Update custom fields with user input
+                payload.customFields2.strings['567e4a1f-9b82-4175-bdca-66132cb8c44a'] = formData.BusinessName;
+                payload.customFields2.strings['54fbab94-8a3b-48ec-98c8-bc37aa2c64de'] = formData.NtnCnic;
+                payload.customFields2.strings['b9712fb7-24bb-493c-a5a6-f9190ef0e943'] = formData.Province;
+                payload.customFields2.strings['a9f32674-2b04-4692-b157-0260c14f47ac'] = formData.Address;
+                payload.customFields2.strings['a8c17945-544f-4590-82c3-08735786f4e7'] = formData.Environment;
+                payload.customFields2.strings['4536b105-2dc1-45a9-9679-57580052fd6a'] = formData.BearerToken;
+                
+                // Send update request to Manager
+                await makeManagerApiRequest('/api3/business-details-form', 'PUT', payload);
+                
+                // Show success message with SweetAlert2
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: 'Business details have been successfully updated.',
+                    confirmButtonText: 'OK'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Redirect to index.html after successful update
+                        window.location.href = '/index.html';
+                    }
+                });
+                
+            } catch (error) {
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: `An error occurred: ${error.message}. Business details were not saved.`,
+                    confirmButtonText: 'OK'
+                });
+            }
+        }
+
+    </script>
+
+    <script>
+        document.getElementById('generate-custom-fields').addEventListener('click', async function () {
+
+            let allMessages = '';
+
+            try {
+                let payload;
+
+                try {
+                    const response = await fetch('/api/BusinessSetup/CustomFieldJson');
+                    if (!response.ok) throw new Error('Failed to fetch JSON data');
+
+                    const jsonObject = await response.json();
+                    let successCount = 0;
+                    let failureCount = 0;
+
+                    for (const entry of jsonObject.jsondata) {
+                        const apiPath = entry.apipath;
+                        const key = entry.data.key;
+                        const fullPath = `/api3${apiPath}/${encodeURIComponent(key)}`;
+
+                        try {
+                            // Use postMessage to communicate with Manager
+                            await makeManagerApiRequest(fullPath, 'PUT', entry.data);
+                            successCount++;
+                        } catch (err) {
+                            failureCount++;
+                            allMessages += `Error sending to ${apiPath}/${key}: ${err.message}\n`;
+                        }
+                    }
+
+                    // Tambahkan ringkasan hasil
+                    allMessages += `Update Custom Fields\nTotal Success: ${successCount}\tTotal Failed: ${failureCount}\n`;
+
+                    // Use complete business details from loaded data (no need to GET from Manager)
+                    // Controller guarantees data availability
+                    if (window.initialData?.businessDetails) {
+                        payload = window.initialData.businessDetails;
+            
+                    } else {
+                        throw new Error('No data available for business details update');
+                    }
+
+                } catch (jsonError) {
+                    console.error('Error processing data:', jsonError.message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Processing Error',
+                        text: 'Error processing data: ' + jsonError.message
+                    });
+                    return;
+                }
+
+                try {
+        
+                    // Update business details using postMessage
+                    await makeManagerApiRequest('/api3/business-details-form', 'PUT', payload);
+                    allMessages += '\nUpdate Business Details successful!\n';
+                } catch (error) {
+                    allMessages += `\nUpdate Business Details Error: ${error.message}\n`;
+                }
+
+            } catch (error) {
+                allMessages += 'General error: ' + error.message + '\n';
+            }
+
+            Swal.fire({
+                    icon: 'info',
+                    title: 'Token Validation Result',
+                    html: allMessages.replace(/\n/g, '<br>')
+                });
+        });
+
+    </script>
+
+</body>
+</html>
